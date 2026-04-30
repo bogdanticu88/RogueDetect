@@ -107,3 +107,66 @@ impl Config {
         Ok(config)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parse(yaml: &str) -> Config {
+        serde_yaml::from_str(yaml).expect("config parse failed")
+    }
+
+    #[test]
+    fn full_config_parses() {
+        let config = parse(r#"
+network:
+  interface: eth0
+  approved_macs:
+    - "AA:BB:CC:DD:EE:FF"
+usb:
+  enabled: true
+  approved_vendors:
+    - 0x046d
+notifiers:
+  - type: slack
+    webhook: "https://hooks.slack.com/services/test"
+log:
+  level: debug
+  format: json
+"#);
+        assert_eq!(config.network.interface, "eth0");
+        assert_eq!(config.network.approved_macs, vec!["AA:BB:CC:DD:EE:FF"]);
+        assert!(config.usb.enabled);
+        assert_eq!(config.usb.approved_vendors, vec![0x046d]);
+        assert_eq!(config.log.level, "debug");
+        assert_eq!(config.log.format, "json");
+    }
+
+    #[test]
+    fn empty_config_uses_defaults() {
+        let config = parse("{}");
+        assert_eq!(config.network.interface, "auto");
+        assert!(config.network.approved_macs.is_empty());
+        assert!(config.usb.enabled);
+        assert!(config.usb.approved_vendors.is_empty());
+        assert!(config.notifiers.is_empty());
+        assert_eq!(config.log.level, "info");
+        assert_eq!(config.log.format, "text");
+    }
+
+    #[test]
+    fn multiple_notifier_types_parse() {
+        let config = parse(r#"
+notifiers:
+  - type: slack
+    webhook: "https://hooks.slack.com/services/x"
+  - type: teams
+    webhook: "https://example.com/teams"
+  - type: webhook
+    url: "https://siem.internal/events"
+    headers:
+      Authorization: "Bearer token"
+"#);
+        assert_eq!(config.notifiers.len(), 3);
+    }
+}

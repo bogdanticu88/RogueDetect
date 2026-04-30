@@ -29,6 +29,9 @@ struct Cli {
 
     #[arg(long, help = "List available network interfaces and exit")]
     list_interfaces: bool,
+
+    #[arg(long, help = "Send a synthetic test event to all configured notifiers and exit")]
+    dry_run: bool,
 }
 
 #[tokio::main]
@@ -67,6 +70,11 @@ async fn main() -> Result<()> {
 
     if notifiers.is_empty() {
         info!("No notifiers configured - events will be logged only");
+    }
+
+    if cli.dry_run {
+        run_dry_run(&notifiers).await;
+        return Ok(());
     }
 
     let (tx, _) = broadcast::channel::<DetectionEvent>(256);
@@ -128,6 +136,51 @@ fn setup_logging(config: &config::LogConfig) {
         tracing_subscriber::fmt().json().with_env_filter(filter).init();
     } else {
         tracing_subscriber::fmt().with_env_filter(filter).init();
+    }
+}
+
+async fn run_dry_run(notifiers: &[Arc<dyn Notifier>]) {
+    use chrono::Utc;
+
+    if notifiers.is_empty() {
+        println!("No notifiers configured. Nothing to test.");
+        return;
+    }
+
+    let events = vec![
+        DetectionEvent::UnknownNetworkDevice {
+            mac: "de:ad:be:ef:00:01".to_string(),
+            ip: "192.168.1.99".to_string(),
+            vendor: "Test Vendor".to_string(),
+            hostname: Some("dry-run-device".to_string()),
+            interface: "dry-run".to_string(),
+            timestamp: Utc::now(),
+        },
+        DetectionEvent::UsbStorageConnected {
+            vendor_id: 0x0781,
+            product_id: 0x5583,
+            manufacturer: Some("SanDisk".to_string()),
+            serial: Some("DRY-RUN-0001".to_string()),
+            host: hostname::get()
+                .map(|h| h.to_string_lossy().to_string())
+                .unwrap_or_else(|_| "unknown".to_string()),
+            timestamp: Utc::now(),
+        },
+    ];
+
+    println!(
+        "Dry run: sending {} test event(s) to {} notifier(s)\n",
+        events.len(),
+        notifiers.len()
+    );
+
+    for event in &events {
+        for notifier in notifiers {
+            match notifier.send(event).await {
+                Ok(()) => println!("  [OK]   {} <- {}", notifier.name(), event.summary()),
+                Err(e) => println!("  [FAIL] {} <- {}: {}", notifier.name(), event.summary(), e),
+            }
+        }
     }
 }
 

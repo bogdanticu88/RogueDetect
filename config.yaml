@@ -1,0 +1,17 @@
+network:
+  interface: "\Device\NPF_{7CAE8E91-7C12-4E9C-8692-37F5D729BB72}"
+  approved_macs: []
+
+usb:
+  enabled: true
+  approved_vendors:
+    - 0x046d   # Logitech
+    - 0x05ac   # Apple
+    - 0x045e   # Microsoft
+    - 0x04f2   # Chicony
+
+notifiers: []
+
+log:
+  level: info
+  format: text

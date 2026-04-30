@@ -5,6 +5,9 @@ edition = "2021"
 description = "Rogue network device and USB storage exfiltration detector"
 license = "MIT"
 
+[lints.clippy]
+all = "warn"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 pcap = "2"

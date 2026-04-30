@@ -1,0 +1,25 @@
+[Unit]
+Description=RogueDetect - Rogue Device and USB Exfiltration Detector
+After=network.target
+Documentation=https://github.com/bogdanticu88/RogueDetect
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/roguedetect --config /etc/roguedetect/config.yaml
+Restart=on-failure
+RestartSec=5
+
+# Harden the service
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/log/roguedetect
+
+# Allow raw packet capture without running as root.
+# Alternative: run as root by removing AmbientCapabilities and User/Group lines.
+User=roguedetect
+Group=roguedetect
+AmbientCapabilities=CAP_NET_RAW
+
+[Install]
+WantedBy=multi-user.target

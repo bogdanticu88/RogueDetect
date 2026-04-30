@@ -50,3 +50,21 @@ fn map() -> &'static HashMap<u32, &'static str> {
 pub fn lookup(oui: u32) -> Option<String> {
     map().get(&oui).map(|s| s.to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn known_vendor_resolved() {
+        assert_eq!(lookup(0x001759), Some("Cisco".to_string()));
+        assert_eq!(lookup(0x000C29), Some("VMware".to_string()));
+        assert_eq!(lookup(0xB827EB), Some("Raspberry Pi Foundation".to_string()));
+    }
+
+    #[test]
+    fn unknown_vendor_returns_none() {
+        assert!(lookup(0xFFFFFF).is_none());
+        assert!(lookup(0x000000).is_none());
+    }
+}

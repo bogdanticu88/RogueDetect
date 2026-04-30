@@ -17,6 +17,11 @@ pub fn run(config: NetworkConfig, tx: broadcast::Sender<DetectionEvent>) -> Resu
     let approved: HashSet<String> = config
         .approved_macs
         .iter()
+        .inspect(|m| {
+            if normalise_mac(m).len() != 12 {
+                warn!("Approved MAC '{}' does not look valid (expected 12 hex digits after normalisation) - it will never match", m);
+            }
+        })
         .map(|m| normalise_mac(m))
         .collect();
 
@@ -167,4 +172,116 @@ fn parse_dhcp(
         interface: interface.to_string(),
         timestamp: Utc::now(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalise_colon_separated() {
+        assert_eq!(normalise_mac("AA:BB:CC:DD:EE:FF"), "aabbccddeeff");
+    }
+
+    #[test]
+    fn normalise_hyphen_separated() {
+        assert_eq!(normalise_mac("aa-bb-cc-dd-ee-ff"), "aabbccddeeff");
+    }
+
+    #[test]
+    fn normalise_bare_lowercase() {
+        assert_eq!(normalise_mac("aabbccddeeff"), "aabbccddeeff");
+    }
+
+    #[test]
+    fn approved_mac_matches_case_insensitive() {
+        let approved: HashSet<String> = ["AA:BB:CC:DD:EE:FF"]
+            .iter()
+            .map(|m| normalise_mac(m))
+            .collect();
+        assert!(approved.contains(&normalise_mac("aa:bb:cc:dd:ee:ff")));
+        assert!(approved.contains(&normalise_mac("AA:BB:CC:DD:EE:FF")));
+    }
+
+    #[test]
+    fn dhcp_discover_unknown_mac_triggers_event() {
+        let approved = HashSet::new();
+        let pkt = make_test_dhcp_packet([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF], 1, None);
+        assert!(parse_dhcp(&pkt, &approved, "eth0").is_some());
+    }
+
+    #[test]
+    fn dhcp_request_unknown_mac_triggers_event() {
+        let approved = HashSet::new();
+        let pkt = make_test_dhcp_packet([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF], 3, None);
+        assert!(parse_dhcp(&pkt, &approved, "eth0").is_some());
+    }
+
+    #[test]
+    fn dhcp_discover_approved_mac_no_event() {
+        let mut approved = HashSet::new();
+        approved.insert(normalise_mac("AA:BB:CC:DD:EE:FF"));
+        let pkt = make_test_dhcp_packet([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF], 1, None);
+        assert!(parse_dhcp(&pkt, &approved, "eth0").is_none());
+    }
+
+    #[test]
+    fn dhcp_offer_ignored() {
+        // OFFER (2) is server-to-client; alerting on it would be noise.
+        let approved = HashSet::new();
+        let pkt = make_test_dhcp_packet([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF], 2, None);
+        assert!(parse_dhcp(&pkt, &approved, "eth0").is_none());
+    }
+
+    #[test]
+    fn dhcp_hostname_extracted() {
+        let approved = HashSet::new();
+        let pkt = make_test_dhcp_packet([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF], 1, Some("laptop01"));
+        if let Some(DetectionEvent::UnknownNetworkDevice { hostname, .. }) =
+            parse_dhcp(&pkt, &approved, "eth0")
+        {
+            assert_eq!(hostname, Some("laptop01".to_string()));
+        } else {
+            panic!("expected UnknownNetworkDevice event");
+        }
+    }
+
+    fn make_test_dhcp_packet(client_mac: [u8; 6], msg_type: u8, hostname: Option<&str>) -> Vec<u8> {
+        // Ethernet (14) + IP (20) + UDP (8) + DHCP fixed (236) + magic (4) + options
+        let mut pkt = vec![0u8; 320];
+
+        // Ethernet header
+        pkt[0..6].copy_from_slice(&[0xff; 6]);
+        pkt[6..12].copy_from_slice(&client_mac);
+        pkt[12] = 0x08;
+        pkt[13] = 0x00;
+
+        // IP header: version/IHL=0x45, protocol=UDP(17)
+        pkt[14] = 0x45;
+        pkt[14 + 9] = 17;
+
+        // DHCP op=BOOTREQUEST(1), chaddr=client_mac
+        let dhcp = 42usize;
+        pkt[dhcp] = 1;
+        pkt[dhcp + 28..dhcp + 34].copy_from_slice(&client_mac);
+
+        // Magic cookie
+        let magic = dhcp + 236;
+        pkt[magic..magic + 4].copy_from_slice(&[0x63, 0x82, 0x53, 0x63]);
+
+        let mut opt = magic + 4;
+        pkt[opt] = 53; pkt[opt + 1] = 1; pkt[opt + 2] = msg_type; opt += 3;
+
+        if let Some(hn) = hostname {
+            let b = hn.as_bytes();
+            pkt[opt] = 12;
+            pkt[opt + 1] = b.len() as u8;
+            pkt[opt + 2..opt + 2 + b.len()].copy_from_slice(b);
+            opt += 2 + b.len();
+        }
+
+        pkt[opt] = 255;
+        pkt.truncate(opt + 1);
+        pkt
+    }
 }
