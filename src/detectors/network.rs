@@ -123,7 +123,7 @@ fn parse_dhcp(data: &[u8], approved: &HashSet<String>, interface: &str) -> Optio
     if data.len() < magic_offset + 4 {
         return None;
     }
-    if &data[magic_offset..magic_offset + 4] != &[0x63, 0x82, 0x53, 0x63] {
+    if data[magic_offset..magic_offset + 4] != [0x63, 0x82, 0x53, 0x63] {
         return None;
     }
 
