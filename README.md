@@ -1,5 +1,9 @@
 # RogueDetect
 
+<p align="center">
+  <img src="assets/logo.png" alt="RogueDetect" width="320" />
+</p>
+
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/bogdanticu88/RogueDetect?style=flat-square&color=green)](https://github.com/bogdanticu88/RogueDetect/releases)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange?style=flat-square&logo=rust)](https://www.rust-lang.org)
