@@ -1,1 +1,3 @@
 /target
+# Local cargo overrides (machine-specific target-dir, env vars, etc.)
+.cargo/local.toml

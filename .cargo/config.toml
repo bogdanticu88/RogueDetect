@@ -1,5 +1,4 @@
-[build]
-target-dir = "C:\\Users\\mihai\\cargo-build\\roguedetect"
-
-[env]
-LIB = "C:\\npcap-sdk\\Lib\\x64"
+# Windows: point the linker at the npcap SDK.
+# Download the SDK from https://npcap.com and extract to C:\npcap-sdk.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-L", "C:\\npcap-sdk\\Lib\\x64"]
