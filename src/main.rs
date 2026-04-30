@@ -30,7 +30,10 @@ struct Cli {
     #[arg(long, help = "List available network interfaces and exit")]
     list_interfaces: bool,
 
-    #[arg(long, help = "Send a synthetic test event to all configured notifiers and exit")]
+    #[arg(
+        long,
+        help = "Send a synthetic test event to all configured notifiers and exit"
+    )]
     dry_run: bool,
 }
 
@@ -61,9 +64,11 @@ async fn main() -> Result<()> {
                 NotifierConfig::Teams { webhook } => {
                     Arc::new(TeamsNotifier::new(webhook.clone(), Arc::clone(&http)))
                 }
-                NotifierConfig::Webhook { url, headers } => {
-                    Arc::new(WebhookNotifier::new(url.clone(), headers.clone(), Arc::clone(&http)))
-                }
+                NotifierConfig::Webhook { url, headers } => Arc::new(WebhookNotifier::new(
+                    url.clone(),
+                    headers.clone(),
+                    Arc::clone(&http),
+                )),
             }
         })
         .collect();
@@ -133,7 +138,10 @@ fn setup_logging(config: &config::LogConfig) {
         .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&config.level));
 
     if config.format == "json" {
-        tracing_subscriber::fmt().json().with_env_filter(filter).init();
+        tracing_subscriber::fmt()
+            .json()
+            .with_env_filter(filter)
+            .init();
     } else {
         tracing_subscriber::fmt().with_env_filter(filter).init();
     }

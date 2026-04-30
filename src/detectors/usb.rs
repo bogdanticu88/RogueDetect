@@ -5,9 +5,9 @@ use std::time::Duration;
 use tokio::sync::broadcast;
 use tracing::{debug, info, warn};
 
+use super::emit;
 use crate::config::UsbConfig;
 use crate::events::DetectionEvent;
-use super::emit;
 
 const CLASS_HID: u8 = 0x03;
 const CLASS_HUB: u8 = 0x09;
@@ -28,7 +28,10 @@ pub fn run(config: UsbConfig, tx: broadcast::Sender<DetectionEvent>) {
     // Initial snapshot - no alerts, just establish baseline.
     let mut known: HashSet<(u8, u8)> = match rusb::devices() {
         Ok(list) => list.iter().map(|d| (d.bus_number(), d.address())).collect(),
-        Err(e) => { warn!("USB initial scan failed: {}", e); HashSet::new() }
+        Err(e) => {
+            warn!("USB initial scan failed: {}", e);
+            HashSet::new()
+        }
     };
 
     loop {
@@ -36,13 +39,22 @@ pub fn run(config: UsbConfig, tx: broadcast::Sender<DetectionEvent>) {
 
         let devices = match rusb::devices() {
             Ok(d) => d,
-            Err(e) => { warn!("USB scan failed: {}", e); continue; }
+            Err(e) => {
+                warn!("USB scan failed: {}", e);
+                continue;
+            }
         };
 
-        let current: HashSet<(u8, u8)> = devices.iter().map(|d| (d.bus_number(), d.address())).collect();
+        let current: HashSet<(u8, u8)> = devices
+            .iter()
+            .map(|d| (d.bus_number(), d.address()))
+            .collect();
 
         for &(bus, addr) in current.difference(&known) {
-            if let Some(device) = devices.iter().find(|d| d.bus_number() == bus && d.address() == addr) {
+            if let Some(device) = devices
+                .iter()
+                .find(|d| d.bus_number() == bus && d.address() == addr)
+            {
                 if let Some(event) = inspect_device(&device, &config, &host) {
                     emit(&tx, event);
                 }
@@ -78,9 +90,15 @@ fn inspect_device(
     if !is_storage {
         if class == CLASS_HID {
             // Unapproved HID - could be a BadUSB / rubber ducky
-            warn!("Unknown HID device (possible BadUSB): {:04x}:{:04x}", vendor_id, product_id);
+            warn!(
+                "Unknown HID device (possible BadUSB): {:04x}:{:04x}",
+                vendor_id, product_id
+            );
         } else {
-            debug!("Non-storage USB device ignored: {:04x}:{:04x} class={:02x}", vendor_id, product_id, class);
+            debug!(
+                "Non-storage USB device ignored: {:04x}:{:04x} class={:02x}",
+                vendor_id, product_id, class
+            );
             return None;
         }
     }
@@ -109,7 +127,9 @@ fn has_storage_interface(device: &rusb::Device<GlobalContext>) -> bool {
         .active_config_descriptor()
         .map(|cfg| {
             cfg.interfaces().any(|iface| {
-                iface.descriptors().any(|d| d.class_code() == CLASS_MASS_STORAGE)
+                iface
+                    .descriptors()
+                    .any(|d| d.class_code() == CLASS_MASS_STORAGE)
             })
         })
         .unwrap_or(false)

@@ -27,12 +27,30 @@ pub enum DetectionEvent {
 impl DetectionEvent {
     pub fn summary(&self) -> String {
         match self {
-            DetectionEvent::UnknownNetworkDevice { mac, ip, vendor, interface, .. } => {
-                format!("[ALERT] Unknown network device: {} ({}) on {}, IP: {}", mac, vendor, interface, ip)
+            DetectionEvent::UnknownNetworkDevice {
+                mac,
+                ip,
+                vendor,
+                interface,
+                ..
+            } => {
+                format!(
+                    "[ALERT] Unknown network device: {} ({}) on {}, IP: {}",
+                    mac, vendor, interface, ip
+                )
             }
-            DetectionEvent::UsbStorageConnected { manufacturer, vendor_id, product_id, host, .. } => {
+            DetectionEvent::UsbStorageConnected {
+                manufacturer,
+                vendor_id,
+                product_id,
+                host,
+                ..
+            } => {
                 let mfr = manufacturer.as_deref().unwrap_or("Unknown");
-                format!("[ALERT] USB storage on {}: {} ({:04x}:{:04x})", host, mfr, vendor_id, product_id)
+                format!(
+                    "[ALERT] USB storage on {}: {} ({:04x}:{:04x})",
+                    host, mfr, vendor_id, product_id
+                )
             }
         }
     }

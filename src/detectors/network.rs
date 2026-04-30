@@ -5,10 +5,10 @@ use std::collections::HashSet;
 use tokio::sync::broadcast;
 use tracing::{debug, info, warn};
 
+use super::emit;
 use crate::config::NetworkConfig;
 use crate::events::DetectionEvent;
 use crate::oui;
-use super::emit;
 
 pub fn run(config: NetworkConfig, tx: broadcast::Sender<DetectionEvent>) -> Result<()> {
     let interface = resolve_interface(&config.interface)?;
@@ -26,7 +26,13 @@ pub fn run(config: NetworkConfig, tx: broadcast::Sender<DetectionEvent>) -> Resu
         .collect();
 
     let mut cap = Capture::from_device(interface.as_str())
-        .map_err(|e| anyhow::anyhow!("Cannot open interface {}: {}. Is npcap/libpcap installed?", interface, e))?
+        .map_err(|e| {
+            anyhow::anyhow!(
+                "Cannot open interface {}: {}. Is npcap/libpcap installed?",
+                interface,
+                e
+            )
+        })?
         .promisc(true)
         .snaplen(576)
         .timeout(1000)
@@ -70,11 +76,7 @@ fn normalise_mac(mac: &str) -> String {
         .collect()
 }
 
-fn parse_dhcp(
-    data: &[u8],
-    approved: &HashSet<String>,
-    interface: &str,
-) -> Option<DetectionEvent> {
+fn parse_dhcp(data: &[u8], approved: &HashSet<String>, interface: &str) -> Option<DetectionEvent> {
     // Handles untagged (0x0800) and single-tag 802.1Q (0x8100); QinQ (0x88a8) not yet supported.
     if data.len() < 14 {
         return None;
@@ -133,12 +135,19 @@ fn parse_dhcp(
         let opt = data[i];
         match opt {
             255 => break,
-            0 => { i += 1; continue; }
+            0 => {
+                i += 1;
+                continue;
+            }
             _ => {}
         }
-        if i + 1 >= data.len() { break; }
+        if i + 1 >= data.len() {
+            break;
+        }
         let len = data[i + 1] as usize;
-        if i + 2 + len > data.len() { break; }
+        if i + 2 + len > data.len() {
+            break;
+        }
         let val = &data[i + 2..i + 2 + len];
         match opt {
             53 if len == 1 => msg_type = Some(val[0]),
@@ -152,9 +161,8 @@ fn parse_dhcp(
         return None;
     }
 
-    let oui_prefix = ((mac_bytes[0] as u32) << 16)
-        | ((mac_bytes[1] as u32) << 8)
-        | (mac_bytes[2] as u32);
+    let oui_prefix =
+        ((mac_bytes[0] as u32) << 16) | ((mac_bytes[1] as u32) << 8) | (mac_bytes[2] as u32);
     let vendor = oui::lookup(oui_prefix).unwrap_or_else(|| "Unknown".to_string());
 
     let yiaddr = &data[dhcp_start + 16..dhcp_start + 20];
@@ -270,7 +278,10 @@ mod tests {
         pkt[magic..magic + 4].copy_from_slice(&[0x63, 0x82, 0x53, 0x63]);
 
         let mut opt = magic + 4;
-        pkt[opt] = 53; pkt[opt + 1] = 1; pkt[opt + 2] = msg_type; opt += 3;
+        pkt[opt] = 53;
+        pkt[opt + 1] = 1;
+        pkt[opt + 2] = msg_type;
+        opt += 3;
 
         if let Some(hn) = hostname {
             let b = hn.as_bytes();

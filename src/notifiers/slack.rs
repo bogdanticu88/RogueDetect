@@ -4,8 +4,8 @@ use reqwest::Client;
 use serde_json::json;
 use std::sync::Arc;
 
-use crate::events::{DetectionEvent, TIMESTAMP_FMT};
 use super::{check_response, Notifier};
+use crate::events::{DetectionEvent, TIMESTAMP_FMT};
 
 pub struct SlackNotifier {
     webhook_url: String,
@@ -14,7 +14,10 @@ pub struct SlackNotifier {
 
 impl SlackNotifier {
     pub fn new(webhook_url: String, client: Arc<Client>) -> Self {
-        Self { webhook_url, client }
+        Self {
+            webhook_url,
+            client,
+        }
     }
 }
 
@@ -27,7 +30,12 @@ impl Notifier for SlackNotifier {
     async fn send(&self, event: &DetectionEvent) -> Result<()> {
         let payload = match event {
             DetectionEvent::UnknownNetworkDevice {
-                mac, ip, vendor, hostname, interface, timestamp,
+                mac,
+                ip,
+                vendor,
+                hostname,
+                interface,
+                timestamp,
             } => {
                 json!({
                     "blocks": [
@@ -50,7 +58,12 @@ impl Notifier for SlackNotifier {
                 })
             }
             DetectionEvent::UsbStorageConnected {
-                vendor_id, product_id, manufacturer, serial, host, timestamp,
+                vendor_id,
+                product_id,
+                manufacturer,
+                serial,
+                host,
+                timestamp,
             } => {
                 json!({
                     "blocks": [
@@ -73,7 +86,12 @@ impl Notifier for SlackNotifier {
             }
         };
 
-        let resp = self.client.post(&self.webhook_url).json(&payload).send().await?;
+        let resp = self
+            .client
+            .post(&self.webhook_url)
+            .json(&payload)
+            .send()
+            .await?;
         check_response(&resp, self.name())
     }
 }

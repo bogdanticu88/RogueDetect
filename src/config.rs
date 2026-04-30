@@ -102,8 +102,8 @@ impl Config {
     pub fn load(path: &Path) -> Result<Self> {
         let content = std::fs::read_to_string(path)
             .map_err(|e| anyhow::anyhow!("Cannot read config file {}: {}", path.display(), e))?;
-        let config: Config = serde_yaml::from_str(&content)
-            .map_err(|e| anyhow::anyhow!("Invalid config: {}", e))?;
+        let config: Config =
+            serde_yaml::from_str(&content).map_err(|e| anyhow::anyhow!("Invalid config: {}", e))?;
         Ok(config)
     }
 }
@@ -118,7 +118,8 @@ mod tests {
 
     #[test]
     fn full_config_parses() {
-        let config = parse(r#"
+        let config = parse(
+            r#"
 network:
   interface: eth0
   approved_macs:
@@ -133,7 +134,8 @@ notifiers:
 log:
   level: debug
   format: json
-"#);
+"#,
+        );
         assert_eq!(config.network.interface, "eth0");
         assert_eq!(config.network.approved_macs, vec!["AA:BB:CC:DD:EE:FF"]);
         assert!(config.usb.enabled);
@@ -156,7 +158,8 @@ log:
 
     #[test]
     fn multiple_notifier_types_parse() {
-        let config = parse(r#"
+        let config = parse(
+            r#"
 notifiers:
   - type: slack
     webhook: "https://hooks.slack.com/services/x"
@@ -166,7 +169,8 @@ notifiers:
     url: "https://siem.internal/events"
     headers:
       Authorization: "Bearer token"
-"#);
+"#,
+        );
         assert_eq!(config.notifiers.len(), 3);
     }
 }

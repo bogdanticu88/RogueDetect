@@ -59,7 +59,10 @@ mod tests {
     fn known_vendor_resolved() {
         assert_eq!(lookup(0x001759), Some("Cisco".to_string()));
         assert_eq!(lookup(0x000C29), Some("VMware".to_string()));
-        assert_eq!(lookup(0xB827EB), Some("Raspberry Pi Foundation".to_string()));
+        assert_eq!(
+            lookup(0xB827EB),
+            Some("Raspberry Pi Foundation".to_string())
+        );
     }
 
     #[test]

@@ -4,8 +4,8 @@ use reqwest::Client;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::events::DetectionEvent;
 use super::{check_response, Notifier};
+use crate::events::DetectionEvent;
 
 pub struct WebhookNotifier {
     url: String,
@@ -15,7 +15,11 @@ pub struct WebhookNotifier {
 
 impl WebhookNotifier {
     pub fn new(url: String, headers: HashMap<String, String>, client: Arc<Client>) -> Self {
-        Self { url, headers, client }
+        Self {
+            url,
+            headers,
+            client,
+        }
     }
 }
 
