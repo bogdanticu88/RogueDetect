@@ -28,7 +28,7 @@ impl DetectionEvent {
     pub fn summary(&self) -> String {
         match self {
             DetectionEvent::UnknownNetworkDevice { mac, ip, vendor, interface, .. } => {
-                format!("[ALERT] Unknown network device: {} ({}) on {} — IP: {}", mac, vendor, interface, ip)
+                format!("[ALERT] Unknown network device: {} ({}) on {}, IP: {}", mac, vendor, interface, ip)
             }
             DetectionEvent::UsbStorageConnected { manufacturer, vendor_id, product_id, host, .. } => {
                 let mfr = manufacturer.as_deref().unwrap_or("Unknown");

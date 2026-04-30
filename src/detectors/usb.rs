@@ -25,7 +25,7 @@ pub fn run(config: UsbConfig, tx: broadcast::Sender<DetectionEvent>) {
         .map(|h| h.to_string_lossy().to_string())
         .unwrap_or_else(|_| "unknown".to_string());
 
-    // Initial snapshot — no alerts, just establish baseline.
+    // Initial snapshot - no alerts, just establish baseline.
     let mut known: HashSet<(u8, u8)> = match rusb::devices() {
         Ok(list) => list.iter().map(|d| (d.bus_number(), d.address())).collect(),
         Err(e) => { warn!("USB initial scan failed: {}", e); HashSet::new() }
@@ -77,7 +77,7 @@ fn inspect_device(
 
     if !is_storage {
         if class == CLASS_HID {
-            // Unapproved HID — could be a BadUSB / rubber ducky
+            // Unapproved HID - could be a BadUSB / rubber ducky
             warn!("Unknown HID device (possible BadUSB): {:04x}:{:04x}", vendor_id, product_id);
         } else {
             debug!("Non-storage USB device ignored: {:04x}:{:04x} class={:02x}", vendor_id, product_id, class);

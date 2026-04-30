@@ -66,12 +66,12 @@ async fn main() -> Result<()> {
         .collect();
 
     if notifiers.is_empty() {
-        info!("No notifiers configured — events will be logged only");
+        info!("No notifiers configured - events will be logged only");
     }
 
     let (tx, _) = broadcast::channel::<DetectionEvent>(256);
 
-    // Fan out each event to all notifiers concurrently — one task per notifier so a
+    // Fan out each event to all notifiers concurrently, one task per notifier so a
     // slow or failing notifier does not delay the others.
     {
         let notifiers = notifiers.clone();
@@ -114,7 +114,7 @@ async fn main() -> Result<()> {
         });
     }
 
-    info!("RogueDetect running — press Ctrl+C to stop");
+    info!("RogueDetect running - press Ctrl+C to stop");
     tokio::signal::ctrl_c().await?;
     info!("Shutting down");
     Ok(())
@@ -137,7 +137,7 @@ fn print_interfaces() {
             println!("Available interfaces:");
             for d in devices {
                 let desc = d.desc.as_deref().unwrap_or("");
-                println!("  {} — {}", d.name, desc);
+                println!("  {} - {}", d.name, desc);
             }
         }
         Err(e) => eprintln!("Failed to list interfaces: {}", e),

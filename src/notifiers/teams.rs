@@ -34,7 +34,7 @@ impl Notifier for TeamsNotifier {
                     { "title": "IP Address",  "value": ip },
                     { "title": "Vendor",      "value": vendor },
                     { "title": "Interface",   "value": interface },
-                    { "title": "Device Hostname", "value": hostname.as_deref().unwrap_or("—") },
+                    { "title": "Device Hostname", "value": hostname.as_deref().unwrap_or("N/A") },
                     { "title": "Detected At", "value": timestamp.format(TIMESTAMP_FMT).to_string() },
                 ]);
                 ("Unknown Network Device Detected", "Attention", facts)
@@ -46,7 +46,7 @@ impl Notifier for TeamsNotifier {
                     { "title": "Host",         "value": host },
                     { "title": "Manufacturer", "value": manufacturer.as_deref().unwrap_or("Unknown") },
                     { "title": "VID:PID",      "value": format!("{:04x}:{:04x}", vendor_id, product_id) },
-                    { "title": "Serial",       "value": serial.as_deref().unwrap_or("—") },
+                    { "title": "Serial",       "value": serial.as_deref().unwrap_or("N/A") },
                     { "title": "Detected At",  "value": timestamp.format(TIMESTAMP_FMT).to_string() },
                 ]);
                 ("USB Storage Device Connected", "Attention", facts)

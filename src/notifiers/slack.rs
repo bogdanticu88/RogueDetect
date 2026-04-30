@@ -42,7 +42,7 @@ impl Notifier for SlackNotifier {
                                 { "type": "mrkdwn", "text": format!("*IP*\n`{}`", ip) },
                                 { "type": "mrkdwn", "text": format!("*Vendor*\n{}", vendor) },
                                 { "type": "mrkdwn", "text": format!("*Interface*\n{}", interface) },
-                                { "type": "mrkdwn", "text": format!("*Device Hostname*\n{}", hostname.as_deref().unwrap_or("—")) },
+                                { "type": "mrkdwn", "text": format!("*Device Hostname*\n{}", hostname.as_deref().unwrap_or("N/A")) },
                                 { "type": "mrkdwn", "text": format!("*Detected At*\n{}", timestamp.format(TIMESTAMP_FMT)) },
                             ]
                         }
@@ -64,7 +64,7 @@ impl Notifier for SlackNotifier {
                                 { "type": "mrkdwn", "text": format!("*Host*\n{}", host) },
                                 { "type": "mrkdwn", "text": format!("*Manufacturer*\n{}", manufacturer.as_deref().unwrap_or("Unknown")) },
                                 { "type": "mrkdwn", "text": format!("*VID:PID*\n`{:04x}:{:04x}`", vendor_id, product_id) },
-                                { "type": "mrkdwn", "text": format!("*Serial*\n{}", serial.as_deref().unwrap_or("—")) },
+                                { "type": "mrkdwn", "text": format!("*Serial*\n{}", serial.as_deref().unwrap_or("N/A")) },
                                 { "type": "mrkdwn", "text": format!("*Detected At*\n{}", timestamp.format(TIMESTAMP_FMT)) },
                             ]
                         }
