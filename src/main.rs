@@ -35,6 +35,8 @@ struct Cli {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
+    print_banner();
+
     if cli.list_interfaces {
         print_interfaces();
         return Ok(());
@@ -42,8 +44,6 @@ async fn main() -> Result<()> {
 
     let config = Config::load(&cli.config)?;
     setup_logging(&config.log);
-
-    info!("RogueDetect starting");
 
     let http = Arc::new(Client::new());
 
@@ -129,6 +129,26 @@ fn setup_logging(config: &config::LogConfig) {
     } else {
         tracing_subscriber::fmt().with_env_filter(filter).init();
     }
+}
+
+fn print_banner() {
+    println!(
+        r#"
+  o$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$o
+ o$$                                                                          $$o
+ $$   ____                          ____       _            _                 $$
+ $$  |  _ \ ___   __ _ _   _  ___  |  _ \  ___| |_ ___  ___| |_  ___  _ __   $$
+ $$  | |_) / _ \ / _` | | | |/ _ \ | | | |/ _ \ __/ _ \/ __| __|/ _ \| '__|  $$
+ $$  |  _ < (_) | (_| | |_| |  __/ | |_| |  __/ ||  __/ (__| |_| (_) | |     $$
+ $$  |_| \_\___/ \__, |\__,_|\___| |____/ \___|\__\___|\___|\__|\___|_|        $$
+ $$               |___/                                                        $$
+ $$                                                                            $$
+ $$    Rogue Device & USB Exfiltration Detector    v{}                         $$
+ o$$                                                                          $$o
+  "o$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$o"
+"#,
+        env!("CARGO_PKG_VERSION")
+    );
 }
 
 fn print_interfaces() {
