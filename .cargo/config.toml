@@ -1,0 +1,3 @@
+[build]
+# Keep build artifacts outside OneDrive to avoid sync conflicts and size issues
+target-dir = "C:\\Users\\mihai\\cargo-build\\roguedetect"

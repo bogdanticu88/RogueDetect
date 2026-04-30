@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact: roguedetect-linux-x86_64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            artifact: roguedetect-linux-arm64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: roguedetect-macos-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: roguedetect-macos-arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: roguedetect-windows-x86_64.exe
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross (Linux musl builds)
+        if: contains(matrix.target, 'linux')
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install libusb
+
+      - name: Install Windows dependencies
+        if: runner.os == 'Windows'
+        run: |
+          vcpkg install libusb:x64-windows-static
+          echo "LIBUSB_DIR=$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows-static" >> $env:GITHUB_ENV
+
+      - name: Build (Linux via cross)
+        if: contains(matrix.target, 'linux')
+        run: cross build --release --target ${{ matrix.target }}
+
+      - name: Build (macOS / Windows)
+        if: "!contains(matrix.target, 'linux')"
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Rename binary
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cp target/${{ matrix.target }}/release/roguedetect.exe ${{ matrix.artifact }}
+          else
+            cp target/${{ matrix.target }}/release/roguedetect ${{ matrix.artifact }}
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            roguedetect-linux-x86_64/roguedetect-linux-x86_64
+            roguedetect-linux-arm64/roguedetect-linux-arm64
+            roguedetect-macos-x86_64/roguedetect-macos-x86_64
+            roguedetect-macos-arm64/roguedetect-macos-arm64
+            roguedetect-windows-x86_64.exe/roguedetect-windows-x86_64.exe

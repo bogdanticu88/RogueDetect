@@ -1,0 +1,29 @@
+network:
+  interface: auto           # or "eth0", "en0", "Wi-Fi" — use --list-interfaces to see options
+  approved_macs:
+    - "00:11:22:33:44:55"   # printer
+    - "AA:BB:CC:DD:EE:FF"   # VoIP phone
+
+usb:
+  enabled: true
+  approved_vendors:         # vendor IDs whose HID devices are suppressed (keyboards, mice)
+    - 0x046d                # Logitech
+    - 0x05ac                # Apple
+    - 0x045e                # Microsoft
+    - 0x04f2                # Chicony (common laptop keyboard OEM)
+
+notifiers:
+  - type: slack
+    webhook: "https://hooks.slack.com/services/REPLACE/ME"
+
+  - type: teams
+    webhook: "https://prod-XX.westus.logic.azure.com/workflows/REPLACE/ME"
+
+  - type: webhook
+    url: "https://your-siem.internal/roguedetect/events"
+    headers:
+      Authorization: "Bearer your-token-here"
+
+log:
+  level: info               # debug | info | warn | error
+  format: text              # text | json
