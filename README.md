@@ -21,7 +21,7 @@ It is built for security teams and system administrators who need to know the mo
 
 ## What problem it solves
 
-Most enterprise environments have strong perimeter security but poor visibility into what is physically connecting to their infrastructure. Penetration testers routinely walk into offices and plant devices: a Raspberry Pi behind a printer, a USB drive left on a desk, and the event goes undetected for hours or days.
+Most enterprise environments have strong perimeter security but poor visibility into what is physically connecting to their infrastructure. 
 
 At the same time, insider data theft over USB is one of the most common and least-detected exfiltration vectors. An employee with a flash drive can walk out with gigabytes of sensitive data in minutes. Modern organizations have little legitimate need for USB storage devices; everything can move through approved channels.
 
