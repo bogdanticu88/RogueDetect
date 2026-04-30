@@ -1,5 +1,11 @@
 # RogueDetect
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/Rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
+[![Release](https://img.shields.io/github/v/release/bogdanticu88/RogueDetect)](https://github.com/bogdanticu88/RogueDetect/releases)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey.svg)](#requirements)
+[![CI](https://img.shields.io/github/actions/workflow/status/bogdanticu88/RogueDetect/release.yml?label=build)](https://github.com/bogdanticu88/RogueDetect/actions)
+
 **Rogue Device and USB Exfiltration Detector**
 
 RogueDetect is a lightweight, cross-platform security tool that detects unauthorized devices on your network and USB storage devices connecting to monitored hosts. It runs as a single binary with no cloud dependency, alerts in real time through Slack, Microsoft Teams, or any webhook endpoint, and is designed to drop into whatever monitoring stack you already have.
