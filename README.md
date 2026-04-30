@@ -1,10 +1,11 @@
 # RogueDetect
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
-[![Release](https://img.shields.io/github/v/release/bogdanticu88/RogueDetect)](https://github.com/bogdanticu88/RogueDetect/releases)
-[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey.svg)](#requirements)
-[![CI](https://img.shields.io/github/actions/workflow/status/bogdanticu88/RogueDetect/release.yml?label=build)](https://github.com/bogdanticu88/RogueDetect/actions)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/bogdanticu88/RogueDetect?style=flat-square&color=green)](https://github.com/bogdanticu88/RogueDetect/releases)
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange?style=flat-square&logo=rust)](https://www.rust-lang.org)
+[![Linux](https://img.shields.io/badge/Linux-supported-success?style=flat-square&logo=linux&logoColor=white)](https://github.com/bogdanticu88/RogueDetect/releases)
+[![macOS](https://img.shields.io/badge/macOS-supported-success?style=flat-square&logo=apple&logoColor=white)](https://github.com/bogdanticu88/RogueDetect/releases)
+[![Windows](https://img.shields.io/badge/Windows-supported-success?style=flat-square&logo=windows&logoColor=white)](https://github.com/bogdanticu88/RogueDetect/releases)
 
 **Rogue Device and USB Exfiltration Detector**
 
