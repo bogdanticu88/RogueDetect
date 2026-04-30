@@ -2,23 +2,20 @@ use anyhow::Result;
 use async_trait::async_trait;
 use reqwest::Client;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use crate::events::DetectionEvent;
-use super::Notifier;
+use super::{check_response, Notifier};
 
 pub struct WebhookNotifier {
     url: String,
     headers: HashMap<String, String>,
-    client: Client,
+    client: Arc<Client>,
 }
 
 impl WebhookNotifier {
-    pub fn new(url: String, headers: HashMap<String, String>) -> Self {
-        Self {
-            url,
-            headers,
-            client: Client::new(),
-        }
+    pub fn new(url: String, headers: HashMap<String, String>, client: Arc<Client>) -> Self {
+        Self { url, headers, client }
     }
 }
 
@@ -34,9 +31,6 @@ impl Notifier for WebhookNotifier {
             builder = builder.header(key.as_str(), value.as_str());
         }
         let resp = builder.send().await?;
-        if !resp.status().is_success() {
-            anyhow::bail!("Webhook returned HTTP {}", resp.status());
-        }
-        Ok(())
+        check_response(&resp, self.name())
     }
 }

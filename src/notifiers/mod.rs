@@ -16,3 +16,10 @@ pub trait Notifier: Send + Sync {
     async fn send(&self, event: &DetectionEvent) -> Result<()>;
     fn name(&self) -> &str;
 }
+
+pub fn check_response(resp: &reqwest::Response, notifier_name: &str) -> Result<()> {
+    if !resp.status().is_success() {
+        anyhow::bail!("{} webhook returned HTTP {}", notifier_name, resp.status());
+    }
+    Ok(())
+}

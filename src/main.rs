@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use clap::Parser;
+use reqwest::Client;
 use tokio::sync::broadcast;
 use tracing::{error, info};
 
@@ -44,19 +45,21 @@ async fn main() -> Result<()> {
 
     info!("RogueDetect starting");
 
+    let http = Arc::new(Client::new());
+
     let notifiers: Vec<Arc<dyn Notifier>> = config
         .notifiers
         .iter()
         .map(|nc| -> Arc<dyn Notifier> {
             match nc {
                 NotifierConfig::Slack { webhook } => {
-                    Arc::new(SlackNotifier::new(webhook.clone()))
+                    Arc::new(SlackNotifier::new(webhook.clone(), Arc::clone(&http)))
                 }
                 NotifierConfig::Teams { webhook } => {
-                    Arc::new(TeamsNotifier::new(webhook.clone()))
+                    Arc::new(TeamsNotifier::new(webhook.clone(), Arc::clone(&http)))
                 }
                 NotifierConfig::Webhook { url, headers } => {
-                    Arc::new(WebhookNotifier::new(url.clone(), headers.clone()))
+                    Arc::new(WebhookNotifier::new(url.clone(), headers.clone(), Arc::clone(&http)))
                 }
             }
         })
@@ -68,26 +71,31 @@ async fn main() -> Result<()> {
 
     let (tx, _) = broadcast::channel::<DetectionEvent>(256);
 
-    // Event dispatcher: fan out each event to all notifiers
+    // Fan out each event to all notifiers concurrently — one task per notifier so a
+    // slow or failing notifier does not delay the others.
     {
         let notifiers = notifiers.clone();
         let mut rx = tx.subscribe();
         tokio::spawn(async move {
             while let Ok(event) = rx.recv().await {
+                let event = Arc::new(event);
                 for notifier in &notifiers {
-                    if let Err(e) = notifier.send(&event).await {
-                        error!("{} notifier failed: {}", notifier.name(), e);
-                        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+                    let notifier = Arc::clone(notifier);
+                    let event = Arc::clone(&event);
+                    tokio::spawn(async move {
                         if let Err(e) = notifier.send(&event).await {
-                            error!("{} notifier retry failed: {}", notifier.name(), e);
+                            error!("{} notifier failed: {}", notifier.name(), e);
+                            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+                            if let Err(e) = notifier.send(&event).await {
+                                error!("{} notifier retry failed: {}", notifier.name(), e);
+                            }
                         }
-                    }
+                    });
                 }
             }
         });
     }
 
-    // Network detector — runs in a blocking thread (pcap is synchronous)
     {
         let network_config = config.network.clone();
         let tx = tx.clone();
@@ -98,7 +106,6 @@ async fn main() -> Result<()> {
         });
     }
 
-    // USB detector — runs in a blocking thread (poll loop)
     {
         let usb_config = config.usb.clone();
         let tx = tx.clone();

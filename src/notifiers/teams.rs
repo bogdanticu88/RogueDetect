@@ -2,21 +2,19 @@ use anyhow::Result;
 use async_trait::async_trait;
 use reqwest::Client;
 use serde_json::json;
+use std::sync::Arc;
 
-use crate::events::DetectionEvent;
-use super::Notifier;
+use crate::events::{DetectionEvent, TIMESTAMP_FMT};
+use super::{check_response, Notifier};
 
 pub struct TeamsNotifier {
     webhook_url: String,
-    client: Client,
+    client: Arc<Client>,
 }
 
 impl TeamsNotifier {
-    pub fn new(webhook_url: String) -> Self {
-        Self {
-            webhook_url,
-            client: Client::new(),
-        }
+    pub fn new(webhook_url: String, client: Arc<Client>) -> Self {
+        Self { webhook_url, client }
     }
 }
 
@@ -27,7 +25,6 @@ impl Notifier for TeamsNotifier {
     }
 
     async fn send(&self, event: &DetectionEvent) -> Result<()> {
-        // Adaptive Card for Teams Workflow webhooks (new format, replaces legacy connectors)
         let (title, color, facts) = match event {
             DetectionEvent::UnknownNetworkDevice {
                 mac, ip, vendor, hostname, interface, timestamp,
@@ -38,7 +35,7 @@ impl Notifier for TeamsNotifier {
                     { "title": "Vendor",      "value": vendor },
                     { "title": "Interface",   "value": interface },
                     { "title": "Device Hostname", "value": hostname.as_deref().unwrap_or("—") },
-                    { "title": "Detected At", "value": timestamp.format("%Y-%m-%d %H:%M:%S UTC").to_string() },
+                    { "title": "Detected At", "value": timestamp.format(TIMESTAMP_FMT).to_string() },
                 ]);
                 ("Unknown Network Device Detected", "Attention", facts)
             }
@@ -50,7 +47,7 @@ impl Notifier for TeamsNotifier {
                     { "title": "Manufacturer", "value": manufacturer.as_deref().unwrap_or("Unknown") },
                     { "title": "VID:PID",      "value": format!("{:04x}:{:04x}", vendor_id, product_id) },
                     { "title": "Serial",       "value": serial.as_deref().unwrap_or("—") },
-                    { "title": "Detected At",  "value": timestamp.format("%Y-%m-%d %H:%M:%S UTC").to_string() },
+                    { "title": "Detected At",  "value": timestamp.format(TIMESTAMP_FMT).to_string() },
                 ]);
                 ("USB Storage Device Connected", "Attention", facts)
             }
@@ -67,7 +64,7 @@ impl Notifier for TeamsNotifier {
                     "body": [
                         {
                             "type": "TextBlock",
-                            "text": format!("🚨 RogueDetect Alert"),
+                            "text": "🚨 RogueDetect Alert",
                             "weight": "Bolder",
                             "size": "Medium",
                             "color": color
@@ -87,9 +84,6 @@ impl Notifier for TeamsNotifier {
         });
 
         let resp = self.client.post(&self.webhook_url).json(&payload).send().await?;
-        if !resp.status().is_success() {
-            anyhow::bail!("Teams webhook returned HTTP {}", resp.status());
-        }
-        Ok(())
+        check_response(&resp, self.name())
     }
 }

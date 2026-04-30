@@ -1,5 +1,6 @@
-// Common OUI prefixes — extend this list or replace with full IEEE database for production.
-// Format: (prefix_as_u32, vendor_name)
+use std::collections::HashMap;
+use std::sync::OnceLock;
+
 static OUI_TABLE: &[(u32, &str)] = &[
     (0x000393, "Apple"),
     (0x0017F2, "Apple"),
@@ -20,7 +21,7 @@ static OUI_TABLE: &[(u32, &str)] = &[
     (0x7C1E52, "Microsoft"),
     (0x000EC6, "Cisco"),
     (0x001143, "Cisco"),
-    (0x0017595, "Cisco"),
+    (0x001759, "Cisco"),
     (0x0050C2, "IEEE 802.1"),
     (0xB827EB, "Raspberry Pi Foundation"),
     (0xDCA632, "Raspberry Pi Foundation"),
@@ -40,9 +41,12 @@ static OUI_TABLE: &[(u32, &str)] = &[
     (0x50C7BF, "TP-Link"),
 ];
 
+static OUI_MAP: OnceLock<HashMap<u32, &'static str>> = OnceLock::new();
+
+fn map() -> &'static HashMap<u32, &'static str> {
+    OUI_MAP.get_or_init(|| OUI_TABLE.iter().copied().collect())
+}
+
 pub fn lookup(oui: u32) -> Option<String> {
-    OUI_TABLE
-        .iter()
-        .find(|(prefix, _)| *prefix == oui)
-        .map(|(_, name)| name.to_string())
+    map().get(&oui).map(|s| s.to_string())
 }
